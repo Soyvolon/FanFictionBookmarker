@@ -12,16 +12,16 @@ namespace FanfictionBookmarker.Data.Bookmarks
         public string Title { get; set; }
         public string Description { get; set; }
 
-        public FanficBookmark() : base("New Bookmark", 0, null) { }
+        public FanficBookmark() : base("New Bookmark", null) { }
 
-        public FanficBookmark(string FicLink, string DisplayName, int Priority, BookmarkFolder Folder) 
-            : this(FicLink, "", "", DisplayName, Priority, Folder)
+        public FanficBookmark(string FicLink, string DisplayName, BookmarkFolder Folder) 
+            : this(FicLink, "", "", DisplayName, Folder)
         {
             
         }
 
-        public FanficBookmark(string FicLink, string Title, string Description, string DisplayName, int Priority, BookmarkFolder Folder) 
-            : base(DisplayName, Priority, Folder)
+        public FanficBookmark(string FicLink, string Title, string Description, string DisplayName, BookmarkFolder Folder) 
+            : base(DisplayName, Folder)
         {
             this.FicLink = FicLink;
             this.Title = Title;

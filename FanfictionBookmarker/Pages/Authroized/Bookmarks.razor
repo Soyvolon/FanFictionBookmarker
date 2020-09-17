@@ -137,7 +137,7 @@
                     @foreach (var fic in start.Contents)
                     {
                         <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1",
-                            @ondrop="@(() => OnDrop(folder))" @ondrag="@(() => OnDrag(folder))">
+                            @ondrop="@(() => OnDrop(fic))" @ondrag="@(() => OnDrag(fic))">
                             <span class="align-content-center"><b>@fic.DisplayName</b></span>
                         </li>
                     }
@@ -248,6 +248,22 @@
                 // TODO: do something;
             }
             else throw ex;
+        }
+    }
+
+    protected void OnDrag(BaseBookmarkData item)
+    {
+        if(!(item is null))
+        {
+
+        }
+    }
+
+    protected void OnDrop(BaseBookmarkData item)
+    {
+        if(!(item is null))
+        {
+
         }
     }
 }

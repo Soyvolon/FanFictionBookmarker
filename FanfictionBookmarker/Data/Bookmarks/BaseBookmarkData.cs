@@ -12,21 +12,18 @@ namespace FanfictionBookmarker.Data.Bookmarks
         [Key]
         public Guid InternalKey { get; set; }
         public string DisplayName { get; set; }
-        public int Priority { get; set; }
         public BookmarkFolder Parent { get; set; }
 
-        public BaseBookmarkData(string DisplayName, int Priority, BookmarkFolder Folder)
+        public BaseBookmarkData(string DisplayName, BookmarkFolder Folder)
         {
             this.DisplayName = DisplayName;
-            this.Priority = Priority;
             this.Parent = Folder;
             Id = Guid.NewGuid();
         }
 
-        public BaseBookmarkData(string DisplayName, int Priority, BookmarkFolder Folder, Guid id)
+        public BaseBookmarkData(string DisplayName, BookmarkFolder Folder, Guid id)
         {
             this.DisplayName = DisplayName;
-            this.Priority = Priority;
             this.Parent = Folder;
             Id = id;
         }

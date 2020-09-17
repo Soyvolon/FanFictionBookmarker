@@ -10,13 +10,13 @@ namespace FanfictionBookmarker.Data.Bookmarks
     
     public class BookmarkFolder : BaseBookmarkData
     {
-        public BookmarkFolder() : this("New Folder", 0, null) { }
+        public BookmarkFolder() : this("New Folder", null) { }
 
-        public BookmarkFolder(string DisplayName, int Priority, BookmarkFolder Folder) : base(DisplayName, Priority, Folder)
+        public BookmarkFolder(string DisplayName, BookmarkFolder Folder) : base(DisplayName, Folder)
         {
 
         }
 
-        public BookmarkFolder(string DisplayName, int Priority, BookmarkFolder Folder, Guid id) : base(DisplayName, Priority, Folder, id) { }
+        public BookmarkFolder(string DisplayName, BookmarkFolder Folder, Guid id) : base(DisplayName, Folder, id) { }
     }
 }

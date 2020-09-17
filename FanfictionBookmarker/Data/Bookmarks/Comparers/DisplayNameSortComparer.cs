@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FanfictionBookmarker.Data.Bookmarks.Comparers
 {
-    public class StandardSortComparer : IComparer<BaseBookmarkData>
+    public class DisplayNameSortComparer : IComparer<BaseBookmarkData>
     {
         public int Compare([AllowNull] BaseBookmarkData x, [AllowNull] BaseBookmarkData y)
         {
@@ -14,12 +14,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.Comparers
             if (x is null) return -1;
             if (y is null) return 1;
 
-            var comp = x.Priority.CompareTo(y.Priority);
-
-            if (comp == 0)
-                return x.DisplayName.CompareTo(y.DisplayName);
-
-            return comp;
+            return x.DisplayName.CompareTo(y.DisplayName);
         }
     }
 }

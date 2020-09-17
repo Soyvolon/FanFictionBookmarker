@@ -24,7 +24,7 @@ namespace FanfictionBookmarker.Areas.Identity.Data
         {
             Folders = new List<BookmarkFolder>();
             Bookmarks = new List<FanficBookmark>();
-            DefaultFolder = new BookmarkFolder("Bookmarks", -1, null);
+            DefaultFolder = new BookmarkFolder("Bookmarks", null);
         }
 
         public void Update(FolderSystem system)

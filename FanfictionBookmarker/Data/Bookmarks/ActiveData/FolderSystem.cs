@@ -37,7 +37,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     var old = folder.Parent;
                     folder.Parent = modelFolder;
 
-                    return UpdatePosition(folder, old);
+                    return UpdatePosition(folder, 0, old);
                 }
                 else
                 {
@@ -48,7 +48,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             }
             else
             {
-                var newFolder = new BookmarkFolder(model.Name, 0, modelFolder);
+                var newFolder = new BookmarkFolder(model.Name, modelFolder);
                 Folders.Add(newFolder);
                 return TryAddFolder(newFolder, out _);
             }
@@ -73,7 +73,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     var old = fanfic.Parent;
                     fanfic.Parent = folder;
 
-                    return UpdatePosition(fanfic, old);
+                    return UpdatePosition(fanfic, 0, old);
                 }
                 else
                 {
@@ -87,7 +87,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             }
             else
             {
-                var newFic = new FanficBookmark(model.FanficUrl, model.FanficTitle, model.Description, model.Name, 0, folder);
+                var newFic = new FanficBookmark(model.FanficUrl, model.FanficTitle, model.Description, model.Name, folder);
                 Bookmarks.Add(newFic);
                 return AddFanfic(newFic);
             }
@@ -108,31 +108,46 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
         {
             if(InteractiveFolder.TryGetFolder(Home, fanfic.Parent, out InteractiveFolder f))
             {
-                return f.Contents.Add(fanfic);
+                f.Contents.Insert(0, fanfic);
+                return true;
             }
 
             return false;
         }
 
-        public bool UpdatePosition(FanficBookmark fanfic, BookmarkFolder oldParent)
+        public bool UpdatePosition(FanficBookmark fanfic, int index, BookmarkFolder oldParent)
         {
             if(InteractiveFolder.TryGetFolder(Home, oldParent, out InteractiveFolder old))
             {
                 if(InteractiveFolder.TryGetFolder(Home, fanfic.Parent, out InteractiveFolder newParent))
                 {
-                    return UpdatePosition(fanfic, newParent, old);
+                    return UpdatePosition(fanfic, index, newParent, old);
                 }
             }
 
             return false;
         }
 
-        public bool UpdatePosition(FanficBookmark fanfic, InteractiveFolder newParent, InteractiveFolder oldParent)
+        public bool UpdatePosition(FanficBookmark fanfic, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
         {
-            return oldParent.Contents.Remove(fanfic) && newParent.Contents.Add(fanfic);
+            if (oldParent.Contents.Remove(fanfic))
+            {
+                try
+                {
+                    newParent.Contents.Insert(index, fanfic);
+
+                    return true;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    return false;
+                }
+            }
+
+            return false;
         }
 
-        public bool UpdatePosition(BookmarkFolder folder, BookmarkFolder oldParent)
+        public bool UpdatePosition(BookmarkFolder folder, int index, BookmarkFolder oldParent)
         {
             if (InteractiveFolder.TryGetFolder(Home, folder, out InteractiveFolder thisFolder))
             {
@@ -140,7 +155,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 {
                     if (InteractiveFolder.TryGetFolder(Home, folder.Parent, out InteractiveFolder newFolder))
                     {
-                        return UpdatePosition(thisFolder, newFolder, old);
+                        return UpdatePosition(thisFolder, index, newFolder, old);
                     }
                 }
             }
@@ -148,9 +163,23 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             return false;
         }
 
-        public bool UpdatePosition(InteractiveFolder folder, InteractiveFolder newParent, InteractiveFolder oldParent)
+        public bool UpdatePosition(InteractiveFolder folder, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
         {
-            return oldParent.Folders.Remove(folder) && newParent.Folders.Add(folder);
+            if (oldParent.Folders.Remove(folder))
+            {
+                try
+                {
+                    newParent.Folders.Insert(index, folder);
+
+                    return true;
+                }
+                catch(ArgumentOutOfRangeException)
+                {
+                    return false;
+                }
+            }
+
+            return false;
         }
 
         private void PopulateFolderSystem()

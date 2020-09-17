@@ -8,19 +8,20 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
 {
     public class InteractiveFolder : BookmarkFolder
     {
-        public SortedSet<FanficBookmark> Contents { get; private set; }
-        public SortedSet<InteractiveFolder> Folders { get; private set; }
+        public List<FanficBookmark> Contents { get; private set; }
+        public List<InteractiveFolder> Folders { get; private set; }
 
-        public InteractiveFolder(BookmarkFolder f) : base(f.DisplayName, f.Priority, f.Parent, f.Id)
+        public InteractiveFolder(BookmarkFolder f) : base(f.DisplayName, f.Parent, f.Id)
         {
-            Contents = new SortedSet<FanficBookmark>(new StandardSortComparer());
-            Folders = new SortedSet<InteractiveFolder>(new StandardSortComparer());
+            Contents = new List<FanficBookmark>();
+            Folders = new List<InteractiveFolder>();
         }
 
         public bool TryAddFolder(BookmarkFolder f, out InteractiveFolder interactive)
         {
             interactive = new InteractiveFolder(f);
-            return Folders.Add(interactive);
+            Folders.Add(interactive);
+            return true;
         }
 
         public static bool TryGetFolder(InteractiveFolder start, BookmarkFolder folder, out InteractiveFolder f)
