@@ -1,0 +1,18 @@
+﻿@page "/recommendations"
+
+<AuthorizeView>
+    <NotAuthorized>
+        <RequireLogin />
+    </NotAuthorized>
+    <Authorized>
+
+        <h3>Recommendations</h3>
+
+        <FanfictionBookmarker.Pages.Alerts.Shared.DevelopmentAlert Title="Under Construction:" Content="Looks like this feature is planned but not ready yet!" />
+
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+}

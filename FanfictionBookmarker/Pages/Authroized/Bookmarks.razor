@@ -1,0 +1,253 @@
+﻿@page "/bookmarks"
+@using FanfictionBookmarker.Data.Bookmarks
+@using FanfictionBookmarker.Data.Bookmarks.DataModels
+@using FanfictionBookmarker.Data.Bookmarks.ActiveData
+@using FanfictionBookmarker.Areas.Identity.Data
+@using FanfictionBookmarker.Data;
+@using Microsoft.AspNetCore.Identity 
+@using Microsoft.EntityFrameworkCore 
+@inject FFBIdentContext context  
+@inject BookmarkService _bookmarkService
+@inject AuthenticationStateProvider _authState
+@inject UserManager<FFBUser> _userManager
+
+@if(errored)
+{
+    <span class="alert-danger"><b>An Error Occoured: </b>@errorMessage</span>
+}
+
+<AuthorizeView Context="AuthView">
+    <NotAuthorized>
+        <RequireLogin />
+    </NotAuthorized>
+    <Authorized Context="Auth">
+        @if (data is null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <h3>My Bookmarks</h3>
+
+            <div id="add-menu" class="alert-light">
+                <button class="btn btn-primary" @onclick="() => this.ShowBookmarkEditor()">
+                    Add Bookmark
+                </button>
+                <button class="btn btn-secondary" @onclick="() => this.ShowFolderEditor()">
+                    Add Folder
+                </button>
+            </div>
+            @if (showBookmarkEditor)
+            {
+                <div id="bookmark-edit">
+                    <h4>Edit Bookmark</h4>
+                    <EditForm Model="@fic" OnValidSubmit="@UpdateFanfic">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <p>
+                            <label>
+                                Display Name:
+                                <InputText id="fic-displayname" @bind-Value="fic.Name"></InputText>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
+                                Fanfic Title:
+                                <InputText id="fic-title" @bind-Value="fic.FanficTitle"></InputText>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
+                                Fanfic URL:
+                                <InputText id="fic-url" @bind-Value="fic.FanficUrl"></InputText>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
+                                Description (Optional):
+                                <InputTextArea id="fic-desc" @bind-Value="fic.Description"></InputTextArea>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
+                                Parent Folder:
+                                <InputSelect id="fic-parent" @bind-Value="fic.ParentFolder">
+                                    <option value="">-- Folder --</option>
+                                    <option value="@data.Home.Id.ToString()">@data.Home.DisplayName</option>
+                                    @foreach (var folder in data.Folders)
+                                    {
+                                        <option value="@folder.Id.ToString()">@folder.DisplayName</option>
+                                    }
+                                </InputSelect>
+                            </label>
+                        </p>
+
+                        <input type="submit" value="Update" class="btn btn-primary" />
+                    </EditForm>
+                </div>
+            }
+            if (showFolderEditor)
+            {
+                <div id="folder-edit">
+                    <h4>Edit Folder</h4>
+                    <EditForm Model="@folder" OnValidSubmit="@UpdateFolder">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <p>
+                            <label>
+                                Folder Name:
+                                <InputText id="folder-name" @bind-Value="folder.Name"></InputText>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
+                                Parent Folder:
+                                <InputSelect id="folder-parent" @bind-Value="folder.ParentFolder">
+                                    <option value="">-- Folder --</option>
+                                    <option value="@data.Home.Id.ToString()">@data.Home.DisplayName</option>
+                                    @foreach (var folder in data.Folders)
+                                    {
+                                        <option value="@folder.Id.ToString()">@folder.DisplayName</option>
+                                    }
+                                </InputSelect>
+                            </label>
+                        </p>
+
+                        <input type="submit" value="Update" class="btn btn-primary" />
+                    </EditForm>
+                </div>
+            }
+
+    <div id="current-bookmarks">
+        @{
+            void DisplayData(InteractiveFolder start, int startMargin)
+            {
+                <ul ondragover="event.preventDefault();" class="list-group" style="margin-left:@startMargin">
+                    @foreach (var folder in start.Folders)
+                    {
+                        <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1",
+                            @ondrop="@(() => OnDrop(folder))" @ondrag="@(() => OnDrag(folder))">
+                            <span class="alert-light">@folder.DisplayName</span>
+                            @{
+                                DisplayData(folder, startMargin + 5);
+                            }
+                        </li>
+                    }
+
+                    @foreach (var fic in start.Contents)
+                    {
+                        <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1",
+                            @ondrop="@(() => OnDrop(folder))" @ondrag="@(() => OnDrag(folder))">
+                            <span class="align-content-center"><b>@fic.DisplayName</b></span>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+
+        @{
+            DisplayData(data.Home, 0);
+        }
+    </div>
+                    }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private Guid activeUser;
+
+    private bool errored = false;
+    private string errorMessage;
+
+    private bool showBookmarkEditor = false;
+    private FanficModel fic;
+
+    private bool showFolderEditor = false;
+    private FolderModel folder;
+
+    private FolderSystem data;
+    private AuthenticationState state;
+
+    protected override async Task OnInitializedAsync()
+    {
+        state = await _authState.GetAuthenticationStateAsync();
+
+        var user = await _userManager.GetUserAsync(state.User);
+
+        if (user is null) return;
+
+        activeUser = user.Id;
+
+        await context.Entry(user).Collection(x => x.Folders).LoadAsync();
+        await context.Entry(user).Collection(x => x.Bookmarks).LoadAsync();
+        await context.Entry(user).Reference(x => x.DefaultFolder).LoadAsync();
+
+        data = await _bookmarkService?.GetFolderSystem(user);
+    }
+
+    protected void ShowBookmarkEditor(FanficBookmark toEdit = null)
+    {
+        fic = new FanficModel(toEdit);
+
+        showBookmarkEditor = true;
+        showFolderEditor = false;
+    }
+
+    protected void ShowFolderEditor(BookmarkFolder toEdit = null)
+    {
+        folder = new FolderModel(toEdit);
+
+        showFolderEditor = true;
+        showBookmarkEditor = false;
+    }
+
+    protected void UpdateFanfic(EditContext edit)
+    {
+        if(data.UpdateFanfic(fic))
+        {
+            showBookmarkEditor = false;
+            fic = null;
+
+            SaveToDatabase();
+        }
+        else
+        {
+            errored = true;
+            errorMessage = "Fanfic Save Failed!";
+        }
+    }
+
+    protected void UpdateFolder(EditContext edit)
+    {
+        if(data.UpdateFolder(folder))
+        {
+            showFolderEditor = false;
+            folder = null;
+
+            SaveToDatabase();
+        }
+        else
+        {
+            errored = true;
+            errorMessage = "Folder Save Failed";
+        }
+    }
+
+    protected void SaveToDatabase()
+    {
+        var user = context.Users.Find(activeUser);
+        user?.Update(data);
+        try
+        {
+            context.SaveChanges();
+        }
+        catch (DbUpdateException ex)
+        {
+            if (ex.InnerException is Npgsql.PostgresException)
+            {
+                // TODO: do something;
+            }
+            else throw ex;
+        }
+    }
+}
