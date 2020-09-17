@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using FanfictionBookmarker.Data.Bookmarks.Comparers;
@@ -12,6 +13,16 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
         public List<InteractiveFolder> Folders { get; private set; }
 
         public InteractiveFolder(BookmarkFolder f) : base(f.DisplayName, f.Parent, f.Id)
+        {
+            Initalize();
+        }
+
+        public InteractiveFolder() : base("Bookmarks", null, Guid.Empty)
+        {
+            Initalize();
+        }
+
+        public void Initalize()
         {
             Contents = new List<FanficBookmark>();
             Folders = new List<InteractiveFolder>();

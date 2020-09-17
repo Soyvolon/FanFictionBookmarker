@@ -13,6 +13,7 @@ namespace FanfictionBookmarker.Data.Bookmarks
         public Guid InternalKey { get; set; }
         public string DisplayName { get; set; }
         public BookmarkFolder Parent { get; set; }
+        public int Index { get; set; } = -1;
 
         public BaseBookmarkData(string DisplayName, BookmarkFolder Folder)
         {
@@ -26,6 +27,14 @@ namespace FanfictionBookmarker.Data.Bookmarks
             this.DisplayName = DisplayName;
             this.Parent = Folder;
             Id = id;
+        }
+
+        public BaseBookmarkData(string DisplayName, BookmarkFolder Folder, Guid id, Guid Key)
+        {
+            this.DisplayName = DisplayName;
+            this.Parent = Folder;
+            Id = id;
+            InternalKey = Key;
         }
     }
 }

@@ -18,5 +18,6 @@ namespace FanfictionBookmarker.Data.Bookmarks
         }
 
         public BookmarkFolder(string DisplayName, BookmarkFolder Folder, Guid id) : base(DisplayName, Folder, id) { }
+        public BookmarkFolder(string DisplayName, BookmarkFolder Folder, Guid id, Guid iid) : base(DisplayName, Folder, id, iid) { }
     }
 }

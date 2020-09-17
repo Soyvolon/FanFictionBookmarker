@@ -12,7 +12,7 @@ namespace FanfictionBookmarker.Data.Bookmarks
     {
         public Task<FolderSystem> GetFolderSystem(FFBUser user)
         {
-            if (user.DefaultFolder is null) user.Initialize();
+            if (user.Bookmarks is null || user.Folders is null) user.Initialize();
 
             var sys = new FolderSystem(user);
 

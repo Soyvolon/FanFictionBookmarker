@@ -13,6 +13,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.DataModels
 
         [Required]
         public string ParentFolder { get; set; }
+        public int Index { get; set; } = -1;
 
         public Guid Id { get; private set; }
 
@@ -24,9 +25,14 @@ namespace FanfictionBookmarker.Data.Bookmarks.DataModels
         public FolderModel(BookmarkFolder f)
         {
             Name = f?.DisplayName ?? "";
-            ParentFolder = f?.Parent.Id.ToString() ?? null;
+            ParentFolder = f?.Parent?.Id.ToString() ?? Guid.Empty.ToString();
 
             Id = f?.Id ?? default;
+        }
+
+        public FolderModel(BookmarkFolder f, int newIndex) : this(f)
+        {
+            Index = newIndex;
         }
     }
 }

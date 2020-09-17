@@ -125,8 +125,8 @@
                 <ul ondragover="event.preventDefault();" class="list-group" style="margin-left:@startMargin">
                     @foreach (var folder in start.Folders)
                     {
-                        <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1",
-                            @ondrop="@(() => OnDrop(folder))" @ondrag="@(() => OnDrag(folder))">
+                        <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1"
+                            @ondrop="() => OnDropFolder(folder)" @ondrag="() => OnDrag(folder)">
                             <span class="alert-light">@folder.DisplayName</span>
                             @{
                                 DisplayData(folder, startMargin + 5);
@@ -136,8 +136,8 @@
 
                     @foreach (var fic in start.Contents)
                     {
-                        <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1",
-                            @ondrop="@(() => OnDrop(fic))" @ondrag="@(() => OnDrag(fic))">
+                        <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1"
+                            @ondrop="() => OnDropFic(fic)" @ondrag="() => OnDrag(fic)">
                             <span class="align-content-center"><b>@fic.DisplayName</b></span>
                         </li>
                     }
@@ -149,7 +149,7 @@
             DisplayData(data.Home, 0);
         }
     </div>
-                    }
+    }
     </Authorized>
 </AuthorizeView>
 
@@ -168,6 +168,9 @@
     private FolderSystem data;
     private AuthenticationState state;
 
+    private int currentIndex;
+    private BaseBookmarkData lastItem;
+
     protected override async Task OnInitializedAsync()
     {
         state = await _authState.GetAuthenticationStateAsync();
@@ -180,7 +183,6 @@
 
         await context.Entry(user).Collection(x => x.Folders).LoadAsync();
         await context.Entry(user).Collection(x => x.Bookmarks).LoadAsync();
-        await context.Entry(user).Reference(x => x.DefaultFolder).LoadAsync();
 
         data = await _bookmarkService?.GetFolderSystem(user);
     }
@@ -255,15 +257,55 @@
     {
         if(!(item is null))
         {
-
+            lastItem = item;
         }
     }
 
-    protected void OnDrop(BaseBookmarkData item)
+    protected void OnDropFolder(InteractiveFolder item)
     {
-        if(!(item is null))
+        if(!(item is null) && currentIndex >= 0)
         {
+            var index = GetIndex(item);
 
+            data.UpdateFolder(new FolderModel((InteractiveFolder)lastItem, index));
+
+            lastItem = null;
+
+            SaveToDatabase();
+            StateHasChanged();
         }
+    }
+
+    protected void OnDropFic(FanficBookmark item)
+    {
+        if (!(item is null) && currentIndex >= 0)
+        {
+            var index = GetIndex(item);
+
+            data.UpdateFanfic(new FanficModel((FanficBookmark)lastItem, index));
+
+            lastItem = null;
+
+            SaveToDatabase();
+            StateHasChanged();
+        }
+    }
+
+    private int GetIndex(BaseBookmarkData item)
+    {
+        if (InteractiveFolder.TryGetFolder(data.Home, item.Parent ?? data.Home, out InteractiveFolder f))
+        {
+            switch (item)
+            {
+                case FanficBookmark mark:
+                    return f.Contents.IndexOf(mark);
+                case InteractiveFolder folder:
+                    return f.Folders.IndexOf(folder);
+                case BookmarkFolder bFolder:
+                    return f.Folders.FindIndex(x => x.Id == bFolder.Id);
+            }
+        }
+
+        return -1;
     }
 }
