@@ -118,42 +118,60 @@
                 </div>
             }
 
-    <div id="current-bookmarks">
-        @{
-            void DisplayData(InteractiveFolder start, int startMargin)
-            {
-                <ul ondragover="event.preventDefault();" class="list-group" style="margin-left:@startMargin">
-                    @foreach (var folder in start.Folders)
-                    {
-                        <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1"
-                            @ondrop="() => OnDrop(folder)" @ondrag="() => OnDrag(folder)">
-                            <span class="alert-light">@folder.DisplayName</span>
-                            @{
-                                DisplayData(folder, startMargin + 5);
-                            }
-                        </li>
-                    }
+        <div id="current-bookmarks">
+            @{
+                void DisplayData(InteractiveFolder start, int startMargin)
+                {
+                    <ul ondragover="event.preventDefault();" class="list-group" style="padding-left:@startMargin">
+                        @foreach (var folder in start.Folders)
+                        {
+                            <li class="list-unstyled" style="padding:2px; padding-right:0px" @ondrop="() => OnDrop(folder, -1)" />
+                            <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1" style="padding-right: 0px;"
+                                @ondrop="() => OnDrop(folder)" @ondrag="() => OnDrag(folder)">
 
-                    @foreach (var fic in start.Contents)
-                    {
-                        <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1"
-                            @ondrop="() => OnDrop(fic)" @ondrag="() => OnDrag(fic)">
-                            <span class="align-content-center"><b>@fic.DisplayName</b></span>
-                        </li>
-                    }
-                </ul>
+                                @if (folder.Collapsed)
+                                {
+                                    <a class="oi oi-arrow-circle-right" @onclick="() => folder.Collapsed = false" />
+                                }
+                                else
+                                {
+                                    <a class="oi oi-arrow-circle-bottom" @onclick="() => folder.Collapsed = true" />
+                                }
+
+                                <span class="alert-light">@folder.DisplayName</span>
+
+                                @if (!folder.Collapsed)
+                                {
+                                    DisplayData(folder, startMargin + 5);
+                                }
+                            </li>
+                        }
+
+                        @foreach (var fic in start.Contents)
+                        {
+                            <li class="list-unstyled" style="padding:2px; padding-right:0px" @ondrop="() => OnDrop(fic, -1)" />
+                            <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1" style="padding-right: 0px;"
+                                @ondrop="() => OnDrop(fic)" @ondrag="() => OnDrag(fic)">
+                                <span class="align-content-center"><b>@fic.DisplayName</b></span>
+                            </li>
+                        }
+
+                        <li class="list-unstyled" style="padding:2px; padding-right:0px" @ondrop="() => OnDrop(start, 1)" />
+                    </ul>
+                }
             }
-        }
 
-        @{
-            DisplayData(data.Home, 0);
-        }
-    </div>
+            @{
+                DisplayData(data.Home, 0);
+            }
+        </div>
     }
     </Authorized>
 </AuthorizeView>
 
 @code {
+    private const float SPACER_PADDING = 1f;
+
     private Guid activeUser;
 
     private bool errored = false;
@@ -262,11 +280,11 @@
             lastSelectionTree.Add(item);
     }
 
-    protected void OnDrop(BaseBookmarkData item)
+    protected void OnDrop(BaseBookmarkData item, int indexMod = 0)
     {
         if (lastSelectionTree.Count > 0)
         {
-            DragAndDropHandler.CompleteReorder(data, lastSelectionTree[0], item);
+            DragAndDropHandler.CompleteReorder(data, lastSelectionTree[0], item, indexMod);
 
             lastSelectionTree = new List<BaseBookmarkData>();
 

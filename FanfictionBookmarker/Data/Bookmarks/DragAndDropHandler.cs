@@ -11,34 +11,46 @@ namespace FanfictionBookmarker.Data.Bookmarks
 {
     public static class DragAndDropHandler
     {
-        public static void CompleteReorder(FolderSystem data, BaseBookmarkData dropped, BaseBookmarkData droppedOn)
+        public static void CompleteReorder(FolderSystem data, BaseBookmarkData dropped, BaseBookmarkData droppedOn, int indexMod)
         {
             if (!DropChecks(data, dropped, droppedOn)) return;
 
             switch(dropped)
             {
                 case InteractiveFolder folder:
-                    DroppedFolder(data, folder, droppedOn);
+                    DroppedFolder(data, folder, droppedOn, indexMod);
                     break;
                 case FanficBookmark fic:
-                    DroppedFic(data, fic, droppedOn);
+                    DroppedFic(data, fic, droppedOn, indexMod);
                     break;
             }
         }
 
-        private static void DroppedFolder(FolderSystem data, InteractiveFolder folder, BaseBookmarkData droppedOn)
+        private static void DroppedFolder(FolderSystem data, InteractiveFolder folder, BaseBookmarkData droppedOn, int indexMod)
         {
-            var index = GetIndex(data, droppedOn);
+            // Dont worry about adding a negative index mod, because then it moves the item two spaces instead of one.
+            var index = GetIndex(data, droppedOn) + (indexMod > 0 ? 1 : 0);
             FolderModel folderModel;
 
             switch(droppedOn)
             {
                 case InteractiveFolder droppedOnFolder:
-                    folderModel = new FolderModel(folder, 0)
+                    if (indexMod == 0)
                     {
-                        ParentFolder = droppedOnFolder.Id.ToString()
-                    };
-                    data.UpdateFolder(folderModel);
+                        folderModel = new FolderModel(folder, 0)
+                        {
+                            ParentFolder = droppedOnFolder.Id.ToString()
+                        };
+                        data.UpdateFolder(folderModel);
+                    }
+                    else
+                    {
+                        folderModel = new FolderModel(folder, index)
+                        {
+                            ParentFolder = droppedOnFolder.Parent?.Id.ToString() ?? Guid.Empty.ToString()
+                        };
+                        data.UpdateFolder(folderModel);
+                    }
                     break;
                 case FanficBookmark droppedOnFic:
                     folderModel = new FolderModel(folder, index)
@@ -50,9 +62,9 @@ namespace FanfictionBookmarker.Data.Bookmarks
             }
         }
 
-        private static void DroppedFic(FolderSystem data, FanficBookmark fic, BaseBookmarkData droppedOn)
+        private static void DroppedFic(FolderSystem data, FanficBookmark fic, BaseBookmarkData droppedOn, int indexMod)
         {
-            var index = GetIndex(data, droppedOn);
+            var index = GetIndex(data, droppedOn) + (indexMod > 0 ? 1 : 0);
             FanficModel ficModel;
 
             switch (droppedOn)

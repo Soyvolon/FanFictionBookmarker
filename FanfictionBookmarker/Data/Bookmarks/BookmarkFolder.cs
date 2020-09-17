@@ -10,6 +10,7 @@ namespace FanfictionBookmarker.Data.Bookmarks
     
     public class BookmarkFolder : BaseBookmarkData
     {
+        public bool Collapsed { get; set; } = true;
         public BookmarkFolder() : this("New Folder", null) { }
 
         public BookmarkFolder(string DisplayName, BookmarkFolder Folder) : base(DisplayName, Folder)
