@@ -126,7 +126,7 @@
                     @foreach (var folder in start.Folders)
                     {
                         <li draggable="true" class="list-group-item" @key="folder.Id" tabindex="1"
-                            @ondrop="() => OnDropFolder(folder)" @ondrag="() => OnDrag(folder)">
+                            @ondrop="() => OnDrop(folder)" @ondrag="() => OnDrag(folder)">
                             <span class="alert-light">@folder.DisplayName</span>
                             @{
                                 DisplayData(folder, startMargin + 5);
@@ -137,7 +137,7 @@
                     @foreach (var fic in start.Contents)
                     {
                         <li draggable="true" class="list-group-item" @key="fic.Id" tabindex="1"
-                            @ondrop="() => OnDropFic(fic)" @ondrag="() => OnDrag(fic)">
+                            @ondrop="() => OnDrop(fic)" @ondrag="() => OnDrag(fic)">
                             <span class="align-content-center"><b>@fic.DisplayName</b></span>
                         </li>
                     }
@@ -168,11 +168,12 @@
     private FolderSystem data;
     private AuthenticationState state;
 
-    private int currentIndex;
-    private BaseBookmarkData lastItem;
+    private List<BaseBookmarkData> lastSelectionTree;
 
     protected override async Task OnInitializedAsync()
     {
+        lastSelectionTree = new List<BaseBookmarkData>();
+
         state = await _authState.GetAuthenticationStateAsync();
 
         var user = await _userManager.GetUserAsync(state.User);
@@ -255,57 +256,22 @@
 
     protected void OnDrag(BaseBookmarkData item)
     {
-        if(!(item is null))
-        {
-            lastItem = item;
-        }
+        if (item is null) return;
+
+        if(!lastSelectionTree.Contains(item))
+            lastSelectionTree.Add(item);
     }
 
-    protected void OnDropFolder(InteractiveFolder item)
+    protected void OnDrop(BaseBookmarkData item)
     {
-        if(!(item is null) && currentIndex >= 0)
+        if (lastSelectionTree.Count > 0)
         {
-            var index = GetIndex(item);
+            DragAndDropHandler.CompleteReorder(data, lastSelectionTree[0], item);
 
-            data.UpdateFolder(new FolderModel((InteractiveFolder)lastItem, index));
-
-            lastItem = null;
+            lastSelectionTree = new List<BaseBookmarkData>();
 
             SaveToDatabase();
             StateHasChanged();
         }
-    }
-
-    protected void OnDropFic(FanficBookmark item)
-    {
-        if (!(item is null) && currentIndex >= 0)
-        {
-            var index = GetIndex(item);
-
-            data.UpdateFanfic(new FanficModel((FanficBookmark)lastItem, index));
-
-            lastItem = null;
-
-            SaveToDatabase();
-            StateHasChanged();
-        }
-    }
-
-    private int GetIndex(BaseBookmarkData item)
-    {
-        if (InteractiveFolder.TryGetFolder(data.Home, item.Parent ?? data.Home, out InteractiveFolder f))
-        {
-            switch (item)
-            {
-                case FanficBookmark mark:
-                    return f.Contents.IndexOf(mark);
-                case InteractiveFolder folder:
-                    return f.Folders.IndexOf(folder);
-                case BookmarkFolder bFolder:
-                    return f.Folders.FindIndex(x => x.Id == bFolder.Id);
-            }
-        }
-
-        return -1;
     }
 }

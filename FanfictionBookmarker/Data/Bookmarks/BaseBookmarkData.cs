@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace FanfictionBookmarker.Data.Bookmarks
 {
-    public abstract class BaseBookmarkData
+    public abstract class BaseBookmarkData : IComparable<BaseBookmarkData>, IComparable<Guid>
     {
         public Guid Id { get; set; }
         [Key]
@@ -35,6 +36,16 @@ namespace FanfictionBookmarker.Data.Bookmarks
             this.Parent = Folder;
             Id = id;
             InternalKey = Key;
+        }
+
+        public int CompareTo([AllowNull] BaseBookmarkData other)
+        {
+            return CompareTo(other.Id);
+        }
+
+        public int CompareTo([AllowNull] Guid other)
+        {
+            return this.Id.CompareTo(other);
         }
     }
 }
