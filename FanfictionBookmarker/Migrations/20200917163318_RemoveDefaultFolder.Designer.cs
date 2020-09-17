@@ -3,15 +3,17 @@ using System;
 using FanfictionBookmarker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FanfictionBookmarker.Migrations
 {
     [DbContext(typeof(FFBIdentContext))]
-    partial class FFBIdentContextModelSnapshot : ModelSnapshot
+    [Migration("20200917163318_RemoveDefaultFolder")]
+    partial class RemoveDefaultFolder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,9 +91,6 @@ namespace FanfictionBookmarker.Migrations
                     b.Property<Guid>("InternalKey")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("Collapsed")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");

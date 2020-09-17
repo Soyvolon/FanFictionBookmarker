@@ -3,15 +3,17 @@ using System;
 using FanfictionBookmarker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FanfictionBookmarker.Migrations
 {
     [DbContext(typeof(FFBIdentContext))]
-    partial class FFBIdentContextModelSnapshot : ModelSnapshot
+    [Migration("20200917145938_RemovePriority")]
+    partial class RemovePriority
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,6 +33,9 @@ namespace FanfictionBookmarker.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("DefaultFolderInternalKey")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .HasColumnType("character varying(256)")
@@ -74,6 +79,8 @@ namespace FanfictionBookmarker.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DefaultFolderInternalKey");
+
                     b.HasIndex("NormalizedEmail")
                         .HasName("EmailIndex");
 
@@ -90,9 +97,6 @@ namespace FanfictionBookmarker.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Collapsed")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
 
@@ -101,9 +105,6 @@ namespace FanfictionBookmarker.Migrations
 
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Index")
-                        .HasColumnType("integer");
 
                     b.Property<Guid?>("ParentInternalKey")
                         .HasColumnType("uuid");
@@ -137,9 +138,6 @@ namespace FanfictionBookmarker.Migrations
 
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Index")
-                        .HasColumnType("integer");
 
                     b.Property<Guid?>("ParentInternalKey")
                         .HasColumnType("uuid");
@@ -282,6 +280,13 @@ namespace FanfictionBookmarker.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
+                });
+
+            modelBuilder.Entity("FanfictionBookmarker.Areas.Identity.Data.FFBUser", b =>
+                {
+                    b.HasOne("FanfictionBookmarker.Data.Bookmarks.BookmarkFolder", "DefaultFolder")
+                        .WithMany()
+                        .HasForeignKey("DefaultFolderInternalKey");
                 });
 
             modelBuilder.Entity("FanfictionBookmarker.Data.Bookmarks.BookmarkFolder", b =>

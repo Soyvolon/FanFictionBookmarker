@@ -16,7 +16,6 @@ namespace FanfictionBookmarker.Areas.Identity.Data
     {
         public List<BookmarkFolder> Folders { get; private set; }
         public List<FanficBookmark> Bookmarks { get; private set; }
-        public BookmarkFolder DefaultFolder { get; set; }
 
         public FFBUser() { }
         
@@ -24,14 +23,12 @@ namespace FanfictionBookmarker.Areas.Identity.Data
         {
             Folders = new List<BookmarkFolder>();
             Bookmarks = new List<FanficBookmark>();
-            DefaultFolder = new BookmarkFolder("Bookmarks", null);
         }
 
         public void Update(FolderSystem system)
         {
             Folders = system.Folders;
             Bookmarks = system.Bookmarks;
-            DefaultFolder = system.Home;
         }
     }
 }
