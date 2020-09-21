@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FanfictionBookmarker.Areas.Identity.Data;
@@ -22,7 +23,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             PopulateFolderSystem();
         }
 
-        public bool UpdateFolder(FolderModel model)
+        public UpdateResult UpdateFolder(FolderModel model)
         {
             var folder = Folders.FirstOrDefault(x => x.Id == model.Id);
 
@@ -48,7 +49,11 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     {
                         return UpdatePosition(folder, model.Index);
                     }
-                    else return true;
+                    else return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Folder Data Updated."
+                    };
                 }
             }
             else
@@ -59,7 +64,7 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             }
         }
 
-        public bool UpdateFanfic(FanficModel model)
+        public UpdateResult UpdateFanfic(FanficModel model)
         {
             var fanfic = Bookmarks.FirstOrDefault(x => x.Id == model.Id);
 
@@ -91,7 +96,11 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     {
                         return UpdatePosition(fanfic, model.Index);
                     }
-                    else return true;
+                    else return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Bookmark Data Updated"
+                    };
                 }
             }
             else
@@ -102,72 +111,154 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
             }
         }
 
-        public bool TryAddFolder(BookmarkFolder folder, out InteractiveFolder iFolder)
+        public UpdateResult TryAddFolder(BookmarkFolder folder, out InteractiveFolder iFolder)
         {
+            List<string> errors = new List<string>();
+
             if(InteractiveFolder.TryGetFolder(Home, folder.Parent ?? Home, out InteractiveFolder res))
             {
-                return res.TryAddFolder(folder, out iFolder);
+                if(res.TryAddFolder(folder, out iFolder))
+                {
+                    return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Folder added."
+                    };
+                }
+                else
+                {
+                    errors.Add("Failed to add the new folder.");
+                }
+            }
+            else
+            {
+                errors.Add("Failed to get the parent folder.");
             }
 
             iFolder = null;
-            return false;
+            return new UpdateResult()
+            {
+                Errors = errors,
+                Success = false
+            };
         }
 
-        public bool AddFanfic(FanficBookmark fanfic)
+        public UpdateResult AddFanfic(FanficBookmark fanfic)
         {
+            List<string> errors = new List<string>();
+
             if(InteractiveFolder.TryGetFolder(Home, fanfic.Parent ?? Home, out InteractiveFolder f))
             {
                 f.Contents.Insert(0, fanfic);
-                return true;
+                return new UpdateResult()
+                {
+                    Success = true,
+                    Message = "New Bookmark Added"
+                };
+            }
+            else
+            {
+                errors.Add("Failed to get parent folder.");
             }
 
-            return false;
+            return new UpdateResult()
+            {
+                Success = false,
+                Errors = errors
+            };
         }
 
-        public bool UpdatePosition(FanficBookmark fanfic, int index, BookmarkFolder oldParent)
+        public UpdateResult UpdatePosition(FanficBookmark fanfic, int index, BookmarkFolder oldParent)
         {
+            List<string> errors = new List<string>();
+
             if(InteractiveFolder.TryGetFolder(Home, oldParent ?? Home, out InteractiveFolder old))
             {
                 if(InteractiveFolder.TryGetFolder(Home, fanfic.Parent ?? Home, out InteractiveFolder newParent))
                 {
                     return UpdatePosition(fanfic, index, newParent, old);
                 }
+                else
+                {
+                    errors.Add("Failed to get new parent folder.");
+                }
+            }
+            else
+            {
+                errors.Add("Failed to get old parent folder");
             }
 
-            return false;
+            return new UpdateResult()
+            {
+                Success = false,
+                Errors = errors
+            };
         }
 
-        public bool UpdatePosition(FanficBookmark bookmark, int index)
+        public UpdateResult UpdatePosition(FanficBookmark bookmark, int index)
         {
+            List<string> errors = new List<string>();
+
             if (InteractiveFolder.TryGetFolder(Home, bookmark.Parent ?? Home, out InteractiveFolder iParent))
             {
                 return UpdatePosition(bookmark, index, iParent, iParent);
             }
+            else
+            {
+                errors.Add("Failed to get bookmark parent.");
+            }
 
-            return false;
+            return new UpdateResult()
+            {
+                Success = false,
+                Errors = errors
+            };
         }
 
-        public bool UpdatePosition(FanficBookmark fanfic, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
+        public UpdateResult UpdatePosition(FanficBookmark fanfic, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
         {
+            List<string> errors = new List<string>();
+
             if (oldParent.Contents.Remove(fanfic))
             {
                 try
                 {
                     newParent.Contents.Insert(index, fanfic);
 
-                    return true;
+                    return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Update Complete"
+                    };
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    return false;
+                    newParent.Contents.Add(fanfic);
+                    errors.Add("Failed to insert bookmark at position. Added folder to end of list.");
+                    return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Failed to instert bookmark at position, added folder to end of list.",
+                        Errors = errors
+                    };
                 }
             }
+            else
+            {
+                errors.Add("Failed to remove bookmark from start position");
+            }
 
-            return false;
+            return new UpdateResult()
+            {
+                Errors = errors,
+                Success = false
+            };
         }
 
-        public bool UpdatePosition(BookmarkFolder folder, int index, BookmarkFolder oldParent)
+        public UpdateResult UpdatePosition(BookmarkFolder folder, int index, BookmarkFolder oldParent)
         {
+            List<string> errors = new List<string>();
+            
             if (InteractiveFolder.TryGetFolder(Home, folder, out InteractiveFolder thisFolder))
             {
                 if (InteractiveFolder.TryGetFolder(Home, oldParent ?? Home, out InteractiveFolder old))
@@ -176,41 +267,93 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     {
                         return UpdatePosition(thisFolder, index, newFolder, old);
                     }
+                    else
+                    {
+                        errors.Add("Failed to get folders new parent.");
+                    }
+                }
+                else
+                {
+                    errors.Add("Failed to get folders old parent.");
                 }
             }
+            else
+            {
+                errors.Add("Failed to get folder.");
+            }
 
-            return false;
+            return new UpdateResult()
+            {
+                Errors = errors,
+                Success = false
+            };
         }
 
-        public bool UpdatePosition(BookmarkFolder folder, int index)
+        public UpdateResult UpdatePosition(BookmarkFolder folder, int index)
         {
+            List<string> errors = new List<string>();
+
             if (InteractiveFolder.TryGetFolder(Home, folder, out InteractiveFolder thisFolder))
             {
                 if (InteractiveFolder.TryGetFolder(Home, folder.Parent ?? Home, out InteractiveFolder iFolder))
                 {
                     return UpdatePosition(thisFolder, index, iFolder, iFolder);
                 }
+                else
+                {
+                    errors.Add("Failed to get parent folder.");
+                }
             }
-            return false;
+            else
+            {
+                errors.Add("Failed to get folder to update.");
+            }
+
+            return new UpdateResult()
+            {
+                Errors = errors,
+                Success = false
+            };
         }
 
-        public bool UpdatePosition(InteractiveFolder folder, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
+        public UpdateResult UpdatePosition(InteractiveFolder folder, int index, InteractiveFolder newParent, InteractiveFolder oldParent)
         {
+            List<string> errors = new List<string>();
+
             if (oldParent.Folders.Remove(folder))
             {
                 try
                 {
                     newParent.Folders.Insert(index, folder);
 
-                    return true;
+                    return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Update Complete"
+                    };
                 }
                 catch(ArgumentOutOfRangeException)
                 {
-                    return false;
+                    newParent.Folders.Add(folder);
+                    errors.Add("Failed to insert folder at position. Added folder to end of list.");
+                    return new UpdateResult()
+                    {
+                        Success = true,
+                        Message = "Failed to instert folder at position, added folder to end of list.",
+                        Errors = errors
+                    };
                 }
             }
+            else
+            {
+                errors.Add("Failed to remove folder from start position");
+            }
 
-            return false;
+            return new UpdateResult()
+            {
+                Errors = errors,
+                Success = false
+            };
         }
 
         private void PopulateFolderSystem()

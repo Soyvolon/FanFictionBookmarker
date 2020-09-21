@@ -11,11 +11,6 @@
 @inject AuthenticationStateProvider _authState
 @inject UserManager<FFBUser> _userManager
 
-@if(errored)
-{
-    <span class="alert-danger"><b>An Error Occoured: </b>@errorMessage</span>
-}
-
 <AuthorizeView Context="AuthView">
     <NotAuthorized>
         <RequireLogin />
@@ -178,9 +173,6 @@
 
     private Guid activeUser;
 
-    private bool errored = false;
-    private string errorMessage;
-
     private bool showBookmarkEditor = false;
     private FanficModel fic;
 
@@ -252,7 +244,8 @@
         }
         else
         {
-            if (data.UpdateFanfic(fic))
+            var res = data.UpdateFanfic(fic);
+            if (res.Success)
             {
                 showBookmarkEditor = false;
                 fic = null;
@@ -261,8 +254,9 @@
             }
             else
             {
-                errored = true;
-                errorMessage = "Fanfic Save Failed!";
+                bookmarkValidator.ClearErrors();
+                errors = new Dictionary<string, List<string>>() { { "Update Failed", res.Errors } };
+                bookmarkValidator.DisplayErrors(errors);
             }
         }
     }
@@ -282,7 +276,8 @@
         }
         else
         {
-            if (data.UpdateFolder(folder))
+            var res = data.UpdateFolder(folder);
+            if (res.Success)
             {
                 showFolderEditor = false;
                 folder = null;
@@ -291,8 +286,9 @@
             }
             else
             {
-                errored = true;
-                errorMessage = "Folder Save Failed";
+                bookmarkValidator.ClearErrors();
+                errors = new Dictionary<string, List<string>>() { { "Update Failed", res.Errors } };
+                bookmarkValidator.DisplayErrors(errors);
             }
         }
     }
