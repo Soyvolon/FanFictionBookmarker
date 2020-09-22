@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace FanfictionBookmarker.Data.Bookmarks.DataModels
 {
     public class FolderModel
     {
         [Required]
+        [Display(Name = "Name")]
         public string Name { get; set; }
 
         [Required]
+        [Display(Name = "Partner Folder")]
         public string ParentFolder { get; set; }
         public int Index { get; set; } = -1;
 

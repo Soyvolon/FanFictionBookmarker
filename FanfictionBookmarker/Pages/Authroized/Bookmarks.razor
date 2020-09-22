@@ -11,11 +11,6 @@
 @inject AuthenticationStateProvider _authState
 @inject UserManager<FFBUser> _userManager
 
-@if(errored)
-{
-    <span class="alert-danger"><b>An Error Occoured: </b>@errorMessage</span>
-}
-
 <AuthorizeView Context="AuthView">
     <NotAuthorized>
         <RequireLogin />
@@ -43,10 +38,12 @@
                     <h4>Edit Bookmark</h4>
                     <EditForm Model="@fic" OnValidSubmit="@UpdateFanfic">
                         <DataAnnotationsValidator />
+                        <BaseBookmarkValidator @ref="bookmarkValidator" />
                         <ValidationSummary />
+
                         <p>
                             <label>
-                                Display Name:
+                                Bookmark Name:
                                 <InputText id="fic-displayname" @bind-Value="fic.Name"></InputText>
                             </label>
                         </p>
@@ -75,9 +72,9 @@
                                     <option value="">-- Folder --</option>
                                     <option value="@data.Home.Id.ToString()">@data.Home.DisplayName</option>
                                     @foreach (var folder in data.Folders)
-                                    {
+                                            {
                                         <option value="@folder.Id.ToString()">@folder.DisplayName</option>
-                                    }
+                                            }
                                 </InputSelect>
                             </label>
                         </p>
@@ -92,7 +89,9 @@
                     <h4>Edit Folder</h4>
                     <EditForm Model="@folder" OnValidSubmit="@UpdateFolder">
                         <DataAnnotationsValidator />
+                        <BaseBookmarkValidator @ref="bookmarkValidator" />
                         <ValidationSummary />
+
                         <p>
                             <label>
                                 Folder Name:
@@ -106,9 +105,9 @@
                                     <option value="">-- Folder --</option>
                                     <option value="@data.Home.Id.ToString()">@data.Home.DisplayName</option>
                                     @foreach (var folder in data.Folders)
-                                    {
+                                            {
                                         <option value="@folder.Id.ToString()">@folder.DisplayName</option>
-                                    }
+                                            }
                                 </InputSelect>
                             </label>
                         </p>
@@ -174,14 +173,13 @@
 
     private Guid activeUser;
 
-    private bool errored = false;
-    private string errorMessage;
-
     private bool showBookmarkEditor = false;
     private FanficModel fic;
 
     private bool showFolderEditor = false;
     private FolderModel folder;
+
+    private BaseBookmarkValidator bookmarkValidator;
 
     private FolderSystem data;
     private AuthenticationState state;
@@ -224,33 +222,74 @@
 
     protected void UpdateFanfic(EditContext edit)
     {
-        if(data.UpdateFanfic(fic))
-        {
-            showBookmarkEditor = false;
-            fic = null;
+        bookmarkValidator.ClearErrors();
 
-            SaveToDatabase();
+        var errors = new Dictionary<string, List<string>>();
+
+        // Do error checking
+
+        if (!bookmarkValidator.IsValidURL(fic.FanficUrl))
+        {
+            var errorString = "Please ensure the URL is a valid Fanfiction URL. Valid website URLs are: ";
+            foreach (var url in Program.ValidUrls)
+                errorString += $"{url},";
+
+            errors.Add(nameof(fic.FanficUrl),
+                new List<string>() { errorString });
+        }
+
+        if (errors.Count > 0)
+        {
+            bookmarkValidator.DisplayErrors(errors);
         }
         else
         {
-            errored = true;
-            errorMessage = "Fanfic Save Failed!";
+            var res = data.UpdateFanfic(fic);
+            if (res.Success)
+            {
+                showBookmarkEditor = false;
+                fic = null;
+
+                SaveToDatabase();
+            }
+            else
+            {
+                bookmarkValidator.ClearErrors();
+                errors = new Dictionary<string, List<string>>() { { "Update Failed", res.Errors } };
+                bookmarkValidator.DisplayErrors(errors);
+            }
         }
     }
 
     protected void UpdateFolder(EditContext edit)
     {
-        if(data.UpdateFolder(folder))
-        {
-            showFolderEditor = false;
-            folder = null;
+        bookmarkValidator.ClearErrors();
 
-            SaveToDatabase();
+        var errors = new Dictionary<string, List<string>>();
+
+        // Do error checking
+
+
+        if (errors.Count > 0)
+        {
+            bookmarkValidator.DisplayErrors(errors);
         }
         else
         {
-            errored = true;
-            errorMessage = "Folder Save Failed";
+            var res = data.UpdateFolder(folder);
+            if (res.Success)
+            {
+                showFolderEditor = false;
+                folder = null;
+
+                SaveToDatabase();
+            }
+            else
+            {
+                bookmarkValidator.ClearErrors();
+                errors = new Dictionary<string, List<string>>() { { "Update Failed", res.Errors } };
+                bookmarkValidator.DisplayErrors(errors);
+            }
         }
     }
 

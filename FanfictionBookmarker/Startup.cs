@@ -46,7 +46,6 @@ namespace FanfictionBookmarker
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 
-            services.AddSingleton<WeatherForecastService>();
             services.AddSingleton<BookmarkService>();
         }
 

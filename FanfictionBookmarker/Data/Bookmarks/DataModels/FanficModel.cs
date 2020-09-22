@@ -9,16 +9,23 @@ namespace FanfictionBookmarker.Data.Bookmarks.DataModels
     public class FanficModel
     {
         [Required]
-        [Display(Description = "Bookmark Name")]
+        [Display(Name = "Bookmark Name")]
         public string Name { get; set; }
+
         [Required]
+        [Display(Name = "Fanfic URL")]
+        
         public string FanficUrl { get; set; }
+
         [Required]
+        [Display(Name = "Fanfic Title")]
         public string FanficTitle { get; set; }
 
+        [Display(Name = "Bookmark Description")]
         public string Description { get; set; }
 
         [Required]
+        [Display(Name = "Partner Folder")]
         public string ParentFolder { get; set; }
         public int Index { get; set; } = 0;
         public Guid Id { get; private set; }
