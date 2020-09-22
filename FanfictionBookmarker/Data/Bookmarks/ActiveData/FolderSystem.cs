@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using FanfictionBookmarker.Areas.Identity.Data;
 using FanfictionBookmarker.Data.Bookmarks.DataModels;
+using FanfictionBookmarker.Data.Extensions;
+using Microsoft.AspNetCore.Razor.Language;
 
 namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
 {
@@ -225,6 +227,8 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 {
                     newParent.Contents.Insert(index, fanfic);
 
+                    newParent.Contents.AssignIndexValues();
+
                     return new UpdateResult()
                     {
                         Success = true,
@@ -234,6 +238,9 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 catch (ArgumentOutOfRangeException)
                 {
                     newParent.Contents.Add(fanfic);
+
+                    newParent.Contents.AssignIndexValues();
+
                     errors.Add("Failed to insert bookmark at position. Added folder to end of list.");
                     return new UpdateResult()
                     {
@@ -326,6 +333,8 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 {
                     newParent.Folders.Insert(index, folder);
 
+                    newParent.Folders.AssignIndexValues();
+
                     return new UpdateResult()
                     {
                         Success = true,
@@ -335,6 +344,9 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 catch(ArgumentOutOfRangeException)
                 {
                     newParent.Folders.Add(folder);
+
+                    newParent.Folders.AssignIndexValues();
+
                     errors.Add("Failed to insert folder at position. Added folder to end of list.");
                     return new UpdateResult()
                     {
@@ -374,7 +386,23 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                 //... if its a bookmark, save it ...
                 if (item is FanficBookmark bookmark)
                 {
-                    start.Contents.Add(bookmark);
+                    // ... see if the index is larger than the count of the list (or is unassigned) ...
+                    if (start.Contents.Count <= bookmark.Index || bookmark.Index == -1)
+                    { // ... if it is, insert item to the end of the list ...
+                        start.Contents.Add(bookmark);
+                    }
+                    else
+                    {
+                        // ... otherwise, try and add it to the position it is supposed to be in ...
+                        try
+                        {
+                            start.Contents.Insert(item.Index, bookmark);
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        { // ... if that fails add it to the end of the list ...
+                            start.Contents.Add(bookmark);
+                        }
+                    }
                 }
                 // ... but if it is a folder ....
                 else if (item is BookmarkFolder folder)
@@ -382,7 +410,21 @@ namespace FanfictionBookmarker.Data.Bookmarks.ActiveData
                     // ... create a new interactive version of the folder ...
                     var interactiveFolder = new InteractiveFolder(folder);
                     // ... add it to the parents folder list ...
-                    start.Folders.Add(interactiveFolder);
+                    if (start.Folders.Count <= interactiveFolder.Index || interactiveFolder.Index == -1)
+                    { // ... if the folder's index is higher than the ammount of items (or is unassigned), add it to the end of the list ...
+                        start.Folders.Add(interactiveFolder);
+                    }
+                    else
+                    {
+                        try
+                        { // ... otherwise, try and insert it into its proper place ...
+                            start.Folders.Insert(interactiveFolder.Index, interactiveFolder);
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        { // ... and if that fails, add it to the end of the list ...
+                            start.Folders.Add(interactiveFolder);
+                        }
+                    }
                     // ... and fill that folder before returning to this loop.
                     FillSystemData(Home, interactiveFolder, data);
                 }
